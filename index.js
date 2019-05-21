@@ -35,7 +35,7 @@ if (config.auth) {
 const mails = [];
 
 const server = new SMTPServer({
-  authOptional: true,
+  authOptional: false,
   maxAllowedUnauthenticatedCommands: 1000,
   onMailFrom(address, session, cb) {
     if (whitelist.length == 0 || whitelist.indexOf(address.address) !== -1) {
@@ -44,8 +44,13 @@ const server = new SMTPServer({
       cb(new Error('Invalid email from: ' + address.address));
     }
   },
+  disabledCommands: ["STARTTLS"],
+  authMethods: ["PLAIN", "LOGIN", "CRAM-MD5"], // CRAM-MD5 is not enabled by default
   onAuth(auth, session, callback) {
-    cli.info('SMTP login for user: ' + auth.username);
+    cli.info(auth.method + ' SMTP login for user: ' + auth.username + ' password: ' + auth.password);
+    if(auth.method == "CRAM-MD5") {
+        cli.info('CRAM-MD5 authentication -- is password huhu5 correct?  ' + auth.validatePassword("huhu5"));
+    }
     callback(null, {
       user: auth.username
     });
